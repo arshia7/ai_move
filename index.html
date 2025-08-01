@@ -190,7 +190,9 @@
             geminiResultDiv.style.display = 'block';
             geminiResultDiv.innerHTML = '🧠 هوش مصنوعی در حال فکر کردن است...';
 
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiApiKey}`;
+            // **FIXED**: Updated the API endpoint to a more recent and stable model.
+            const model = 'gemini-1.5-flash-latest';
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`;
             
             try {
                 const response = await fetch(apiUrl, {
@@ -199,13 +201,17 @@
                     body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
                 });
 
-                if (!response.ok) throw new Error(`خطای شبکه: ${response.status}. کلید API خود را بررسی کنید.`);
+                if (!response.ok) {
+                     const errorData = await response.json();
+                     console.error("API Error Response:", errorData);
+                     throw new Error(`خطای ${response.status}: ${errorData.error.message}`);
+                }
                 const result = await response.json();
                 
                 if (result.candidates && result.candidates[0].content.parts.length > 0) {
                     const generatedText = result.candidates[0].content.parts[0].text;
                     if (gemini_type === 'breakdown') {
-                        const steps = generatedText.split('\n').filter(step => step.trim() !== '' && step.trim().match(/^\d+\./)).map(step => step.replace(/^\d+\.\s*/, ''));
+                        const steps = generatedText.split('\n').filter(step => step.trim() !== '' && step.trim().match(/^\*|\d+\./)).map(step => step.replace(/^\*|\d+\.\s*/, '').trim());
                         let checklistHtml = '<ul>';
                         steps.forEach(step => {
                             checklistHtml += `<li><input type="checkbox"><label>${step}</label></li>`;
@@ -216,7 +222,9 @@
                         geminiResultDiv.innerText = generatedText;
                     }
                 } else {
-                    throw new Error('پاسخ معتبری از هوش مصنوعی دریافت نشد. ممکن است محتوای شما مسدود شده باشد.');
+                    // This case handles potential content filtering or empty responses
+                    console.warn("API response was successful but contained no content.", result);
+                    throw new Error('پاسخ معتبری از هوش مصنوعی دریافت نشد. ممکن است محتوای شما به دلیل خط‌مشی‌های ایمنی مسدود شده باشد.');
                 }
             } catch (error) {
                 console.error('Error calling Gemini API:', error);
