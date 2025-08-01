@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>فلوچارت عیب‌یابی هوشمند (نسخه گیت‌هاب)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4f46e5; /* indigo-600 */
+            --primary-hover: #4338ca; /* indigo-700 */
+            --secondary-color: #10b981; /* emerald-500 */
+            --secondary-hover: #059669; /* emerald-600 */
+            --danger-color: #ef4444; /* red-500 */
+            --danger-hover: #dc2626; /* red-600 */
+            --light-gray: #f8fafc;
+            --medium-gray: #e5e7eb;
+            --dark-gray: #334155;
+        }
+        /* General Body and Layout Styles */
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            background-color: #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 1rem;
+            margin: 0;
+        }
+        /* Card Container Style */
+        .card {
+            background-color: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            transition: all 0.3s ease-in-out;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            position: relative;
+        }
+        /* Button Styles */
+        .btn {
+            border-radius: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            font-weight: 700;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-yes { background-color: var(--secondary-color); color: white; }
+        .btn-yes:hover { background-color: var(--secondary-hover); }
+        .btn-no { background-color: var(--danger-color); color: white; }
+        .btn-no:hover { background-color: var(--danger-hover); }
+        .btn-restart { background-color: #3b82f6; color: white; }
+        .btn-restart:hover { background-color: #2563eb; }
+        .btn-gemini { background-color: var(--primary-color); color: white; }
+        .btn-gemini:hover { background-color: var(--primary-hover); }
+        .btn-gemini:disabled { background-color: #a5b4fc; cursor: not-allowed; }
+        
+        /* Result Card Styles */
+        .result-card { 
+            border-right: 5px solid; 
+            padding: 1rem;
+            background-color: var(--light-gray);
+            margin-bottom: 1rem;
+            text-align: right;
+        }
+        .diagnosis { border-color: #f97316; }
+        .solution { border-color: var(--secondary-color); }
+        .solution ul { list-style-type: disc; padding-right: 1.5rem; margin-top: 0.5rem; }
+        
+        /* Gemini AI Section */
+        .gemini-section {
+            border-top: 1px solid var(--medium-gray);
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            text-align: right;
+        }
+        .gemini-title { color: var(--primary-color); font-weight: 700; margin-bottom: 0.75rem; font-size: 1.125rem; }
+        .input-field { width: 100%; padding: 0.5rem 0.75rem; border-radius: 0.5rem; border: 1px solid var(--medium-gray); margin-bottom: 1rem; box-sizing: border-box; }
+        #gemini-result { background-color: #f3f4f6; border-radius: 0.5rem; padding: 1rem; margin-top: 1rem; white-space: pre-wrap; }
+        #gemini-result ul { list-style-type: none; padding-right: 0; }
+        #gemini-result li { display: flex; align-items: center; margin-bottom: 0.5rem; }
+        #gemini-result input[type="checkbox"] { margin-left: 0.75rem; width: 1.25rem; height: 1.25rem; cursor: pointer; }
+
+        /* API Key Modal */
+        #api-key-modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+        }
+        #api-key-modal .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            max-width: 500px;
+            width: 90%;
+            text-align: right;
+        }
+        #api-key-modal .close-btn {
+            color: #aaa;
+            float: left; /* For LTR close button */
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="flowchart-container" class="card">
+        <!-- Main content is injected here -->
+    </div>
+
+    <!-- API Key Modal Structure -->
+    <div id="api-key-modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="toggleApiKeyModal(false)">&times;</span>
+            <h3 class="gemini-title">تنظیم کلید API هوش مصنوعی Gemini</h3>
+            <p style="margin-bottom: 1rem;">برای استفاده از قابلیت‌های هوشمند، به یک کلید API از Google AI Studio نیاز دارید. می‌توانید آن را به صورت رایگان از <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: var(--primary-color);">اینجا</a> دریافت کنید.</p>
+            <input type="password" id="api-key-input" class="input-field" placeholder="کلید API خود را اینجا وارد کنید...">
+            <button class="btn btn-gemini" onclick="saveApiKey()">ذخیره کلید</button>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA STRUCTURE FOR THE FLOWCHART ---
+        const flowchart = {
+            start: { type: 'question', text: 'آیا تعریف تسک از نظر خودم واضح و شفاف است؟', yes: 'q_energy', no: 'r_unclear_task' },
+            r_unclear_task: { type: 'result', diagnosis: 'تشخیص: تعریف نامشخص یا بزرگی بیش از حد تسک.', solution: 'راهکار: تسک را به مراحل کوچک‌تر بشکن. می‌توانید از ابزار هوشمند زیر برای این کار کمک بگیرید.', gemini_enabled: true, gemini_type: 'breakdown' },
+            q_energy: { type: 'question', text: 'آیا از نظر فیزیکی و ذهنی انرژی کافی دارم؟', yes: 'q_boring', no: 'r_no_energy' },
+            r_no_energy: { type: 'result', diagnosis: 'تشخیص: تخلیه انرژی یا خستگی ذهنی.', solution: 'راهکار: نیازهای اساسی بدن و ذهن خود را در اولویت قرار دهید. استراحت کنید، غذای سالم بخورید یا چند دقیقه قدم بزنید.' },
+            q_boring: { type: 'question', text: 'آیا این کار به نظرم کسل‌کننده و بی‌اهمیت می‌آید؟', yes: 'r_disconnected', no: 'q_fear' },
+            r_disconnected: { type: 'result', diagnosis: 'تشخیص: قطع ارتباط تسک با «چرایی» اصلی.', solution: 'راهکار: بین این کار و هدف بزرگ‌ترتان ارتباط برقرار کنید. از ابزار هوشمند زیر برای یافتن انگیزه کمک بگیرید.', gemini_enabled: true, gemini_type: 'connect_why' },
+            q_fear: { type: 'question', text: 'آیا ترس از شکست یا کمال‌گرایی، مانع شروع من شده است؟', yes: 'r_mental_block', no: 'q_distractions' },
+            r_mental_block: { type: 'result', diagnosis: 'تشخیص: بلوک ذهنی ناشی از ترس یا کمال‌گرایی.', solution: 'راهکار: هدف را روی شروع کردن بگذارید، نه عالی انجام دادن. از مربی هوشمند زیر یک گفتگوی انگیزشی دریافت کنید.', gemini_enabled: true, gemini_type: 'pep_talk' },
+            q_distractions: { type: 'question', text: 'آیا محیط اطرافم پر از عوامل حواس‌پرتی است؟', yes: 'r_bad_env', no: 'r_combo' },
+            r_bad_env: { type: 'result', diagnosis: 'تشخیص: محیط نامناسب و پر از مانع.', solution: 'راهکار: محیط کار خود را مهندسی کنید. بزرگترین عامل حواس‌پرتی را به صورت فیزیکی حذف یا محدود کنید.' },
+            r_combo: { type: 'result', diagnosis: 'تشخیص: ترکیبی از موارد بالا یا مشکلی عمیق‌تر.', solution: 'راهکار: موضوع را با یک فرد مورد اعتماد در میان بگذارید. گاهی بیان کردن مشکل با صدای بلند، خودش نیمی از راه حل است.' }
+        };
+
+        // --- APPLICATION LOGIC ---
+        const container = document.getElementById('flowchart-container');
+        let currentNodeKey = 'start';
+        let geminiApiKey = localStorage.getItem('geminiApiKey') || '';
+
+        // --- API KEY MANAGEMENT ---
+        const apiKeyModal = document.getElementById('api-key-modal');
+        function toggleApiKeyModal(show) {
+            apiKeyModal.style.display = show ? 'flex' : 'none';
+        }
+        function saveApiKey() {
+            const input = document.getElementById('api-key-input');
+            if (input.value.trim()) {
+                geminiApiKey = input.value.trim();
+                localStorage.setItem('geminiApiKey', geminiApiKey);
+                alert('کلید API با موفقیت ذخیره شد.');
+                toggleApiKeyModal(false);
+                renderNode(currentNodeKey); // Re-render to show Gemini button
+            } else {
+                alert('لطفاً یک کلید API معتبر وارد کنید.');
+            }
+        }
+
+        // --- GEMINI API CALL FUNCTION ---
+        async function callGemini(prompt, gemini_type) {
+            if (!geminiApiKey) {
+                alert('لطفاً ابتدا کلید API خود را در تنظیمات وارد کنید.');
+                toggleApiKeyModal(true);
+                return;
+            }
+
+            const geminiResultDiv = document.getElementById('gemini-result');
+            const geminiButton = document.getElementById('gemini-btn');
+            
+            geminiButton.disabled = true;
+            geminiResultDiv.style.display = 'block';
+            geminiResultDiv.innerHTML = '🧠 هوش مصنوعی در حال فکر کردن است...';
+
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiApiKey}`;
+            
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+
+                if (!response.ok) throw new Error(`خطای شبکه: ${response.status}. کلید API خود را بررسی کنید.`);
+                const result = await response.json();
+                
+                if (result.candidates && result.candidates[0].content.parts.length > 0) {
+                    const generatedText = result.candidates[0].content.parts[0].text;
+                    if (gemini_type === 'breakdown') {
+                        const steps = generatedText.split('\n').filter(step => step.trim() !== '' && step.trim().match(/^\d+\./)).map(step => step.replace(/^\d+\.\s*/, ''));
+                        let checklistHtml = '<ul>';
+                        steps.forEach(step => {
+                            checklistHtml += `<li><input type="checkbox"><label>${step}</label></li>`;
+                        });
+                        checklistHtml += '</ul>';
+                        geminiResultDiv.innerHTML = checklistHtml;
+                    } else {
+                        geminiResultDiv.innerText = generatedText;
+                    }
+                } else {
+                    throw new Error('پاسخ معتبری از هوش مصنوعی دریافت نشد. ممکن است محتوای شما مسدود شده باشد.');
+                }
+            } catch (error) {
+                console.error('Error calling Gemini API:', error);
+                geminiResultDiv.innerText = `متاسفانه مشکلی پیش آمد: ${error.message}`;
+            } finally {
+                geminiButton.disabled = false;
+            }
+        }
+        
+        // --- UI RENDERING ---
+        function handleGeminiRequest(gemini_type) {
+            let prompt = '';
+            if (gemini_type === 'breakdown') {
+                const task = document.getElementById('input1').value.trim();
+                if (!task) { alert('لطفاً تسک خود را وارد کنید.'); return; }
+                prompt = `You are an expert project manager. Break down the following task into a clear, numbered list of small, actionable steps. The user's task is: "${task}". Provide the response in Persian.`;
+            } else if (gemini_type === 'connect_why') {
+                const task = document.getElementById('input1').value.trim();
+                const goal = document.getElementById('input2').value.trim();
+                if (!task || !goal) { alert('لطفاً هر دو فیلد را پر کنید.'); return; }
+                prompt = `You are a motivational coach. The user is doing a task they find boring: '${task}'. Their larger goal is: '${goal}'. Explain in 2-3 concise points how completing this task helps them achieve their goal. Respond in a supportive tone and in Persian.`;
+            } else if (gemini_type === 'pep_talk') {
+                prompt = `You are a compassionate mindset coach. The user is feeling a mental block due to fear of failure or perfectionism. Provide a short, powerful pep talk (3-4 sentences) to help them start. Reframe the fear into a positive. Respond in an encouraging tone and in Persian.`;
+            }
+            callGemini(prompt, gemini_type);
+        }
+
+        function renderNode(nodeKey) {
+            const node = flowchart[nodeKey];
+            let html = '';
+
+            if (node.type === 'question') {
+                html = `
+                    <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem;">${node.text}</h2>
+                    <div style="display: flex; justify-content: center; gap: 1rem;">
+                        <button class="btn btn-yes" onclick="handleAnswer('yes')">بله</button>
+                        <button class="btn btn-no" onclick="handleAnswer('no')">خیر</button>
+                    </div>
+                `;
+            } else if (node.type === 'result') {
+                let geminiHtml = '';
+                if (node.gemini_enabled) {
+                    let inputsHtml = '';
+                    let buttonText = '';
+                    let title = '';
+                    if (node.gemini_type === 'breakdown') {
+                        title = '✨ کمک هوشمند برای شکستن تسک';
+                        inputsHtml = '<input type="text" id="input1" class="input-field" placeholder="مثال: نوشتن گزارش فروش سه ماهه">';
+                        buttonText = 'برایم به مراحل کوچک‌تر تقسیم کن';
+                    } else if (node.gemini_type === 'connect_why') {
+                        title = '✨ یافتن چرایی و ایجاد انگیزه';
+                        inputsHtml = `
+                            <input type="text" id="input1" class="input-field" placeholder="کار کسل‌کننده: مثال: تمیز کردن خانه">
+                            <input type="text" id="input2" class="input-field" placeholder="هدف بزرگ‌تر: مثال: داشتن آرامش ذهنی">
+                        `;
+                        buttonText = 'برایم ارتباطش را توضیح بده';
+                    } else if (node.gemini_type === 'pep_talk') {
+                        title = '✨ دریافت گفتگوی انگیزشی';
+                        buttonText = 'به من انگیزه بده';
+                    }
+                    geminiHtml = `
+                        <div class="gemini-section">
+                            <h4 class="gemini-title">${title}</h4>
+                            ${inputsHtml}
+                            <button id="gemini-btn" class="btn btn-gemini" style="width: 100%;" onclick="handleGeminiRequest('${node.gemini_type}')">${buttonText}</button>
+                            <div id="gemini-result" style="display: none;"></div>
+                        </div>
+                    `;
+                }
+
+                html = `
+                    <div style="text-align: right;">
+                        <div class="result-card diagnosis">
+                            <h3 style="font-size: 1.125rem; font-weight: 700; color: #c2410c;">تشخیص مشکل:</h3>
+                            <p>${node.diagnosis}</p>
+                        </div>
+                        <div class="result-card solution">
+                            <h3 style="font-size: 1.125rem; font-weight: 700; color: #15803d;">راهکار پیشنهادی:</h3>
+                            <p>${node.solution}</p>
+                        </div>
+                        ${geminiHtml}
+                        <div style="text-align: center; padding-top: 1rem;">
+                            <button class="btn btn-restart" onclick="restart()">شروع مجدد</button>
+                            <button class="btn" style="background-color: #6b7280; color: white;" onclick="toggleApiKeyModal(true)">تنظیمات API</button>
+                        </div>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+        }
+
+        function handleAnswer(answer) {
+            const currentNode = flowchart[currentNodeKey];
+            const nextNodeKey = currentNode[answer];
+            if (nextNodeKey) {
+                currentNodeKey = nextNodeKey;
+                renderNode(currentNodeKey);
+            }
+        }
+
+        function restart() {
+            currentNodeKey = 'start';
+            renderNode(currentNodeKey);
+        }
+
+        // Initial render when the page loads
+        window.onload = () => {
+            renderNode(currentNodeKey);
+            if (!geminiApiKey) {
+                setTimeout(() => {
+                    alert('برای استفاده از قابلیت‌های هوشمند، لطفاً کلید API خود را در بخش «تنظیمات API» وارد کنید.');
+                }, 1000);
+            }
+        };
+    </script>
+</body>
+</html>
